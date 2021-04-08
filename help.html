@@ -1,0 +1,208 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <title></title>
+	<meta charset="utf-8" />
+    <style>
+        body {
+            font-family:Verdana;
+            font-size: small;
+            color: navy;
+            padding: 15px;
+        }
+    </style>
+</head>
+<body>
+    <h2>ESP File Manager for NodeMCU</h2>
+    <p>(Developed using NodeMCU 3.0-master, complete build details below)</p>
+    <p>
+        This app allows files of any size or type to be uploaded to and downloaded from an ESP-8266,
+        using any browser [within reason.].
+    </p>
+
+    <p>
+        When uploading a file, if a file of that name already exists, behavior is dictated by the "if file exists..."
+        pulldown:
+    </p>
+    <ul>
+        <li><b>Backup:</b> Renames the existing file to filename(1).ext.  If that file exists it is deleted (only one backup copy is kept.)</li>
+        <li><b>Overwrite:</b>  The original file is overwritten when the upload completes.</li>
+        <li><b>Abort:</b> If the file exists the ESP server returns status 403 and the upload is aborted.</li>
+    </ul>
+
+    <p><b>Capabilities:</b></p>
+    <ul>
+        <li>No file size limit (up to the capacity of the ESP.)</li>
+        <li>All file types are supported, text or binary.</li>
+        <li>HTML files and images are rendered in a new browser tab.</li>
+        <li>Multiple files can be selected for upload.</li>
+        <li>Long file names are supported.</li>
+        <li>Up to 5 silmultaneous file downloads (from ESP) are supported. (The sixth exceeds memory capacity.)</li>
+        <li>Up to 2 silmultaneous file uploads (to ESP) are supported. (Depending on other activity, anything more than one concurrent upload risks exceeding memory capacity.)</li>
+        <li>Provides a directory listing, with a download link for each file.</li>
+        <li>Allows files to be deleted and renamed.</li>
+        <li>Operates as either a stand-alone AP or as a station connected to your AP.</li>
+        <li>The current ESP free heap size is sent as a header with most responses, and can be explicitly requested as well.</li>
+        <li>The web page provides a way to edit the app's configuration file and update it on the ESP.</li>
+    </ul>
+
+    <p><b>Limitations:</b></p>
+    <ul>
+        <li>Multiple silmultaneous downloads using the same file name, from the same IP address, are not supported. (i.e., the remote host IP + filename must be unique.)</li>
+        <li>Multiple silmultaneous uploads to the same file name from any hosts, is unsupported.</li>
+        <li>File corruption will be the consequence if either of the two conditions above occur.</li>
+        <li>Error checking capabilities are extremely limited.</li>
+        <li>The upload user interface is the standard input type=file element, however, the upload protocol is not standard, the script code in files.js must be used.</li>
+    </ul>
+
+    <p><b>Setup:</b></p>
+    <ul>
+        <li>Edit the file cfg.lua to configure this app for your environment.  (See details below.)
+        <li>Copy all files in this folder to the ESP file system, using ESplorer or similar.
+        <li>Reset the ESP.
+    </ul>
+
+    <p><b>Configuration:</b></p>
+    <ul>
+        <li>The ESP can operate in either station or AP mode.</li>
+        <li>
+            <b>To configure, edit cfg.lua</b>
+            <ul>
+                <li>
+                    AP Mode:
+                    <ul>
+                        <li>cfg.Mode:  set the value to "AP".  Only the values that start with "AP" apply to this mode.</li>
+                        <li>The default values create an open AP using channel 6 with SSID "espfilemgr" using IP address 192.168.4.1</li>
+                    </ul>
+                </li>
+                <li>
+                    Station Mode:
+                    <ul>
+                        <li>cfg.Mode: set the value "Station".  Only the values that start with "Station" apply to this mode.</li>
+                        <li>cfg.StationWiFiSSID: Identifies the AP the ESP will connect to.</li>
+                        <li>cfg.StationWiFiPwd: The password for the AP that the ESP will connect to.</li>
+                    </ul>
+                </li>
+            </ul>
+        </li>
+    </ul>
+
+
+    <p><b>Usage:</b></p>
+    <ul>
+        <li>The ESP can operate in either station or AP mode.</li>
+        <li>
+            Connect to the ESP via network
+            <ul>
+                <li>If in AP mode you must connect to the ESP as a client using another WiFi device.</li>
+                <li>If in station mode, the ESP connects to your WiFi AP and it can be accessed by any other device on the network.</li>
+            </ul>
+        </li>
+        <li>
+            Use the IP address of the ESP to browse to it using your web browser.  Examples:
+            <ul>
+                <li>http://192.168.4.1/files.html  (Default address in AP mode.)</li>
+                <li>http://192.168.x.x/files.html  (In station mode you must determine the IP address that was assigned, details below.)</li>
+            </ul>
+        </li>
+    </ul>
+
+
+    <p><b>To determine which IP was assigned to the ESP by your network:</b></p>
+    <ul>
+        <li>
+            In station mode there are a few ways to determine the IP:
+            <ul>
+                <li>Monitor the ESP's UART output while it is booting, it will dump its assigned IP after connecting.</li>
+                <li>Find it in your WiFi AP configuration's list of connected devices (or DHCP clients.)</li>
+                <li>
+                    Probe the network for it using a PC:
+                    <ul>
+                        <li>
+                            Before powering on the ESP open a console window and execute the command: PING 192.168.255.255&lt;enter&gt; then
+                            execute ARP -A&lt;enter&gt; Note the IP addresses listed in the output.
+                        </li>
+                        <li>Power up the ESP and give it a minute or two to connect.</li>
+                        <li>
+                            Re-execute the same console commands, look for a new address in the output, use that address to browse to it.  e.g.,
+                            if the new address in the list is 192.168.0.6, browse to http://192.168.0.6/files.html or
+                            http://192.168.0.6/ (the default file is index.html, which contains a client-side 
+                            redirect to files.html)
+                        </li>
+                    </ul>
+                </li>
+            </ul>
+        </li>
+        <li>In AP mode the IP of the ESP is set in the configuration file cfg.lua, default is 192.168.4.1
+    </ul>
+
+    <p>
+        If you want to incorporate this functionality in another app, and you have already configured/connected to a network,
+        copy all of the code from init.lua except for the last two lines, to your init file.  You will need to assign either the variable ip or serverip,
+        depending on mode.   Then when you want this functionality to be available execute server.lua, e.g., dofile("server.lua")  To disable the
+        functionality and recover the memory used by server.lua, reset the ESP.
+    </p>
+
+    <p>LFS:</p>
+    <ul>
+        <li>
+            You can get an extra 10K or so of memory or your ESP by using LFS (a thorough discussion of which can be found
+            <a href="https://nodemcu.readthedocs.io/en/dev/lfs/">here</a>.)
+        </li>
+        <li>
+            To enable LFS:
+            <ul>
+                <li>Upload lfs.img to the ESP</li>
+                <li>Execute the command node.flashreload("lfs.img") on the ESP</li>
+            </ul>
+        </li>
+        <li>
+            If you make any changes to the 3 files that are included in the LFS image, you must recompile them and update the ESP:
+            <ul>
+                <li>Add the files server.lua, wificfgsvr.lua and fileupload.lua to a zip file, name it lfs.zip.</li>
+                <li>Upload the lfs.zip file to <a href="https://blog.ellisons.org.uk/article/nodemcu/a-lua-cross-compile-web-service/">this site</a> to compile it into an LFS image.</li>
+                <li>The site will send lfs.img as a download.</li>
+                <li>Upload lfs.img to the ESP</li>
+                <li>Execute the command node.flashreload("lfs.img") on the ESP</li>
+                <li>Delete server.lua, wificfgsvr.lua and fileupload.lua from the ESP</li>
+            </ul>
+        </li>
+    </ul>
+    een, doeseen, does
+    <p>API Documentation</p>
+    <ul>
+        <li>[file name] - name of file, URL encoded if necessary</li>
+        <li>
+            [option]
+            <ul>
+                <li>Backup - If file exists, it is renamed to keep as a backup.</li>
+                <li>Overwrite  - If file exists, it is overwritten.</li>
+                <li>Abort - If file exists, transfer is aborted.</li>
+            </ul>
+        </li>
+        <li>/api/send/[file name]/[option]</li>
+        <li>/api/append/[file name]  (POST)</li>
+        <li>/api/persist/[file name]/[option]</li>
+        <li>/api/rename/[old file name]/[new file name]</li>
+        <li>/api/delete/[file name]</li>
+        <li>/api/restart</li>
+        <li>/api/heap</li>
+        <li>/api/dofile/[file name]</li>
+        <li>/api/version/[file name]</li>
+    </ul>
+
+    <p><b>Build details:</b></p>
+    <pre>
+NodeMCU 3.0.0.0 built on nodemcu-build.com provided by frightanic.com
+	branch: master
+	commit: 310faf7fcc9130a296f7f17021d48c6d717f5fb6
+	release: 3.0-master_20190907
+	release DTS: 201909070945
+	SSL: false
+	build type: integer
+	LFS: 0x0
+	modules: file,gpio,net,node,tmr,uart,wifi
+build 2019-12-04 04:30 powered by Lua 5.1.4 on SDK 3.0.1-dev(fce080e)
+    </pre>
+</body>
+</html>

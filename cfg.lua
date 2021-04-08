@@ -1,0 +1,10 @@
+cfg = {}
+--cfg.Mode = "AP"
+cfg.Mode = "Station"
+cfg.APServerSSID = "espfilemgr"
+cfg.APServerChannel = 6
+cfg.APServerPwd = nil
+cfg.APServerIP = "192.168.4.1"
+cfg.StationWiFiSSID = "YourWiFiSSID"
+cfg.StationWiFiPwd = "password"
+cfg.DebugLevel = 1

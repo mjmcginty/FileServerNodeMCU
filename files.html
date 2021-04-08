@@ -1,0 +1,151 @@
+﻿<!DOCTYPE html>
+
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="utf-8" />
+    <title></title>
+    <script src="files.js"></script>
+</head>
+<body style="font-family: sans-serif; font-size: small;">
+    ESP IP or host: <input type="text" id="ESPServerElement" style="width: 350px;" onchange="confirmCookie(this)" />
+    <a href="help.html" target="_blank">Help</a><br /><br />
+    <table>
+        <tr>
+            <td>
+                <!--div style="width: 100px; display: inline-block;"></!div -->
+                <button onclick="restartESP()">Restart ESP</button>
+                <button onclick="getheap()">Heap</button>
+                <label id="heapElement"></label>
+                <br /><br />
+            </td>
+        </tr>
+        <tr>
+            <td style="border: solid gray 1px;padding: 5px;">
+                <table cellspacing="2" cellpadding="4" border="0" style="width: 325px;">
+                    <tr>
+                        <th colspan="2" style="text-align:left;">
+                            Files to send:
+                        </th>
+                        <th style="text-align:left;">
+                            If file exists:
+                        </th>
+                    </tr>
+                    <tr>
+                        <td colspan="2">
+                            <input id="File1" type="file" multiple />
+                        </td>
+                        <td>
+                            <select id="optionsList">
+                                <option value="Backup">Backup</option>
+                                <option value="Overwrite">Overwrite</option>
+                                <option value="Abort">Abort</option>
+                                <!--option value="Ignore">Ignore</option -->
+                            </select>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="width:155px; text-align:center;">
+                            <button onclick="sendFiles(document.getElementById('File1'));" style="height:30px;width:80px;">Upload</button>
+                        </td>
+                        <td colspan="2" style="text-align:left;">
+                            Progress: <input type="text" id="statusElement" style="border: none; width: 175px;" /><br />
+                            <div style="width:125px; border: solid gray 1px; ">
+                                <div style="height: 10px; width: 0px; color: white; font-size: xx-small; text-align: center; background-color: green; margin-top: 1px; margin-bottom: 1px;" id="progressBar"></div>
+                            </div>
+
+                        </td>
+                    </tr>
+                </table>
+
+            </td>
+        </tr>
+    </table>
+    <hr />
+
+
+    <button onclick="getFileList()">Refresh File List</button>&nbsp;&nbsp;&nbsp;
+    <button onclick="getCfg()">Edit Config</button>
+    <br /><br />
+    <div id="configDiv" style="display:none; border: solid gray 1px; width: 360px; padding: 5px;">
+        <button onclick="sendCfg()">Save Config</button> <button onclick="this.parentElement.style.display = 'none'">Cancel</button><br /><br />
+        <textarea id="configElement" style="width: 350px; height: 220px;"></textarea>
+    </div>
+    <table>
+        <tr>
+            <td>
+                <div style="overflow-y: auto;">
+                    <table id="fileList" border="0"></table>
+                </div>
+            </td>
+            <td valign="top">
+                <div style="border: solid gray 1px; padding: 5px; margin-left:25px;">
+                    <select id="fileDropdown"></select><br /><br />
+                    <button id="deleteFileBtn" onclick="deleteSelectedFile(this)">Delete Selected File</button><br />
+                    <div id="deleteConfirmDiv" style="display:none;">
+                        <br />
+                        Delete the selected file?<br />
+                        Click the Delete button again to confirm
+                    </div>
+                    <br />
+                    <button id="renameFileBtn" onclick="renameSelectedFile(this)">Rename Selected File</button><br />
+                    <div id="newNameDiv" style="display:none;">
+                        <br />
+                        New file name <input type="text" id="newFileNameInput" /><br /><br />
+                        (Enter new name and click the Rename button again.)
+                    </div>
+                    <button id="cancelFileOpBtn" style="display:none;" onclick="cancelDeleteRename(this)">Cancel</button>
+                </div>
+            </td>
+        </tr>
+    </table>
+
+    <script>
+        var cookiebuf = document.cookie;
+        var tempcookie = cookiebuf.substring(cookiebuf.indexOf("espserver")) + ";";
+        var temparr = tempcookie.split(";");
+        cookiebuf = temparr[0];
+        var serverElement = document.getElementById('ESPServerElement');
+        if (cookiebuf && cookiebuf.length) {
+            var tempArray = cookiebuf.split("=");
+            if (tempArray[1].length)
+                serverElement.value = tempArray[1];
+            else
+                serverElement.value = location.hostname + ":" + window.location.port;
+        }
+        else {
+            serverElement.value = location.hostname;
+        }
+
+        var initObj = {
+            "serverElement": serverElement,
+            "statusElement": document.getElementById("statusElement"),
+            "optionsListElement": document.getElementById("optionsList"),
+            "progressElement": document.getElementById("progressBar"),
+            "fileListElement": document.getElementById("fileList"),
+            "fileDropdownElement": document.getElementById("fileDropdown"),
+            "newNameDivElement": document.getElementById("newNameDiv"),
+            "newFileNameInputElement": document.getElementById("newFileNameInput"),
+            "deleteConfirmDivElement": document.getElementById("deleteConfirmDiv"),
+            "cancelFileOpBtnElement": document.getElementById("cancelFileOpBtn"),
+            "deleteFileBtnElement": document.getElementById("deleteFileBtn"),
+            "renameFileBtnElement": document.getElementById("renameFileBtn"),
+            "configElement": document.getElementById("configElement"),
+            "configDiv": document.getElementById("configDiv"),
+            "heapElement": document.getElementById("heapElement")
+        }
+
+        fileJsInit(initObj);
+        getFileList();
+
+        function confirmCookie(that) {
+            if (confirm("Save changes in a cookie?")) {
+                setCookie(that);
+            }
+        }
+        function setCookie(serverElement) {
+            document.cookie = "espserver=" + serverElement.value + "; expires=Thu, 18 Dec 2023 12:00:00 UTC; path=/";
+        }
+    </script>
+
+</body>
+</html>

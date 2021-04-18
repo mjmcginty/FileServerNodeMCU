@@ -5,7 +5,7 @@ local module =...
         MAXNAMELEN = 18
         local buf
         local fname = string.sub(pname, 1, MAXNAMELEN)
-        tmr.wdclr()
+        --tmr.wdclr()
         if file.exists(fname) then
 			s, e = string.find(string.reverse(fname), ".", 1, true)
 			local ext = string.lower(string.sub(fname, -(s - 1)))

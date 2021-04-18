@@ -5,7 +5,7 @@ local module =...
 		----cprint(node.heap(), 2) 
 		if (initStage == 0) then
 			--cprint("[wifi.setmode]", 3)
-			wifi.setmode(wifi.STATIONAP)
+			wifi.mode(wifi.STATIONAP, true)
 			if (cfg.Mode == "AP") then
 				nextCfgStep = 5
 			else
@@ -15,24 +15,29 @@ local module =...
 			return
 		end
 		if (initStage == 1) then
+			wifi.sta.on("got_ip", function(ev, info)
+				print("NodeMCU IP config:", info.ip, "netmask", info.netmask, "gw", info.gw)
+				ip = info.ip
+			end)
 			if cfg.WiFiPwd == nil then
 				cfg.WiFiPwd = ""
 			end
-			local staconfig = {}
+			staconfig = {}
 			staconfig.ssid = cfg.StationWiFiSSID
 			staconfig.pwd = cfg.StationWiFiPwd
+			staconfig.auto = false
 			wifi.sta.config(staconfig)
 			initStage = 2
 			return
 		end
 		if (initStage == 2) then
 			--cprint("[wifi.connect]", 3)
-			wifi.sta.connect()
+			wifi.start()
 			initStage = 3
 			return
 		end
 		if (initStage == 3) then
-			ip = wifi.sta.getip()
+			--ip = wifi.sta.getip()
 			initStage = 4
 			return
 		end
@@ -76,6 +81,7 @@ local module =...
 		end
 
 		if initStage == 6 then
+			wifi.start()
 			--cprint("[server ip]", 5)
 			local ipcfg =  {
 				ip=cfg.APServerIP,

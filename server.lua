@@ -9,7 +9,7 @@ local retval = ""
 local success = "{ \"status\": \"success\", \"bytes\": "
 local option
 local isResetting = false
-print("filexfer server")
+print("* * * filexfer server is online * * *")
 activeClients = {}
 
 function getFreeHeapHeader() 
@@ -17,6 +17,9 @@ function getFreeHeapHeader()
 end
 
 function getFileObject(sck, fileName, mode)
+	if (sck == nil) then
+		return
+	end
 	local port, ip = sck:getpeer()
 	if (activeClients[ip] == nil) then
 		activeClients[ip] = {}
@@ -30,6 +33,9 @@ function getFileObject(sck, fileName, mode)
 end
 
 function closeFileObject(sck, fileName)
+	if (sck == nil) then
+		return
+	end
 	local port, ip = sck:getpeer()
 	if (activeClients[ip] ~= nil) then
 		if (activeClients[ip][fileName] ~= nil) then
@@ -64,6 +70,10 @@ local function getfilesize(name)
 end
 
 local function writefile(sck, name, mode, data)
+	if (sck == nil) then
+		return
+	end
+
 	local f = getFileObject(sck, "t_" .. name, mode)
     if (f == nil) then
         return -1
@@ -121,22 +131,38 @@ function disconnection(conn)
 end
 
 function sent(conn) 
+	print("sent isPostData:", isPostData)
 	if (isPostData ~= true) then
 		currentFileName = ""
 		isPostData = false
-		conn:close()
+		if (conn ~= nil) then 
+			conn:close()
+		end
 		cprint("onsent closing connection", 1)
+	else
+		if (conn ~= nil) then 
+			conn:close()
+		end
 	end
 end
 
 function receive(conn, payload)
-    tmr.wdclr();
+    --tmr.wdclr();
     local s, e, m, buf, k, v
     local tbl = {}
     local i = 1
 	local method
-
 	s, e = string.find(payload, "HTTP", 1, true)
+	if (isPostData) then
+		print("isPostData is true")
+	else
+		print("isPostData is not true")
+	end
+	if (e == nil) then
+		print("e is nil")
+	else
+		print("e is not nil")
+	end
     if (isPostData and (e == nil)) then
         retval = writefile(conn, currentFileName, "a+", payload)
 		cprint("ispostdata raw data" .. #payload, 4)

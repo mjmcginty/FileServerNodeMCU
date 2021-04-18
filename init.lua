@@ -1,6 +1,6 @@
 --,init,lua,1,0,1,0
 
-dofile("_init.lua")
+--dofile("_init.lua")
 
 dofile("cfg.lua")
 

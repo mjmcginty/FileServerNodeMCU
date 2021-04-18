@@ -9,7 +9,7 @@ local retval = ""
 local success = "{ \"status\": \"success\", \"bytes\": "
 local option
 local isResetting = false
-cprint("* * * filexfer server is online * * *")
+cprint("* * * filexfer server is online * * *", 0)
 activeClients = {}
 
 function getFreeHeapHeader() 

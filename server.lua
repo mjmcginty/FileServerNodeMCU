@@ -9,7 +9,7 @@ local retval = ""
 local success = "{ \"status\": \"success\", \"bytes\": "
 local option
 local isResetting = false
-print("filexfer server")
+cprint("* * * filexfer server is online * * *")
 activeClients = {}
 
 function getFreeHeapHeader() 
@@ -124,8 +124,14 @@ function sent(conn)
 	if (isPostData ~= true) then
 		currentFileName = ""
 		isPostData = false
-		conn:close()
+		if (conn ~= nil) then 
+			conn:close()
+		end
 		cprint("onsent closing connection", 1)
+	else
+		if (conn ~= nil) then 
+			conn:close()
+		end
 	end
 end
 

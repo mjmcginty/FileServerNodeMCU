@@ -16,41 +16,88 @@ function getFreeHeapHeader()
 	return "\r\nFreeHeap: " .. node.heap()
 end
 
-function getFileObject(sck, fileName, mode)
-	local port, ip = sck:getpeer()
+function getFileObject(sck, fileName, mode, pip, pport)
+	local port, ip	
+	if (pip ~= nil and pport ~= nil) then
+		ip = pip
+		port = pport
+	else
+		if (sck == nil) then
+			return
+		else
+			port, ip = sck:getpeer()
+		end
+	end
 	if (activeClients[ip] == nil) then
 		activeClients[ip] = {}
 		cprint("creating active client for " .. ip, 2)
 	end
-	if (activeClients[ip][fileName] == nil) then
-		activeClients[ip][fileName] = file.open(fileName, mode)
+	if (activeClients[ip][port] == nil) then
+		activeClients[ip][port] = file.open(fileName, mode)
 		cprint("opening file handle " .. fileName, 3)
 	end
-	return activeClients[ip][fileName]
+	return activeClients[ip][port]
 end
 
-function closeFileObject(sck, fileName)
-	local port, ip = sck:getpeer()
+function closeFileObject(sck, fileName, pip, pport)
+	local port, ip	
+	if (pip ~= nil and pport ~= nil) then
+		ip = pip
+		port = pport
+	else
+		if (sck == nil) then
+			return
+		else
+			port, ip = sck:getpeer()
+		end
+	end
 	if (activeClients[ip] ~= nil) then
-		if (activeClients[ip][fileName] ~= nil) then
-			activeClients[ip][fileName]:close()
-			activeClients[ip][fileName] = nil
+		if (activeClients[ip][port] ~= nil) then
+			activeClients[ip][port]:close()
+			activeClients[ip][port] = nil
 			cprint("closing file handle " .. fileName, 3)
 		end 
+	else
+		cprint("closeFileObject no active client " .. ip, 1)
 	end
 end
+
+function isFileOpen(sck, fileName, pip, pport)
+	local port, ip	
+	if (pip ~= nil and pport ~= nil) then
+		ip = pip
+		port = pport
+	else
+		if (sck == nil) then
+			return
+		else
+			port, ip = sck:getpeer()
+		end
+	end
+	if (sck == nil) then
+		return false
+	end
+	if (activeClients[ip] == nil) then
+		return false
+	end
+	if (activeClients[ip][port] == nil) then
+		return false
+	end
+	return true
+end
+
 
 local srv=net.createServer(net.TCP, 60) 
 srv:listen(80,
-    function(conn) 
+	function(conn) 
 		assignHandlers(conn)
-    end
+	end
 )
 
 function assignHandlers(conn)
-        conn:on("disconnection", disconnection)
-        conn:on("sent", sent)
-        conn:on("receive", receive)
+		conn:on("disconnection", disconnection)
+		conn:on("sent", sent)
+		conn:on("receive", receive)
 end
 
 local function getfilesize(name)
@@ -64,12 +111,16 @@ local function getfilesize(name)
 end
 
 local function writefile(sck, name, mode, data)
-	local f = getFileObject(sck, "t_" .. name, mode)
-    if (f == nil) then
-        return -1
-    end
-    f:write(data)
-    closeFileObject(sck, "t_" .. name)
+	if (sck == nil) then
+		return
+	end
+
+	local f = getFileObject(sck, "t_" .. name, mode, nil, nil)
+	if (f == nil) then
+		return -1
+	end
+	f:write(data)
+	closeFileObject(sck, "t_" .. name, nil, nil)
 	f = nil
 	return success.. getfilesize("t_" .. name).. "}"
 end
@@ -117,10 +168,11 @@ end
 
 function disconnection(conn) 
 	cprint("disconnection", 1)
-    isPostData = false
+	isPostData = false
 end
 
 function sent(conn) 
+	print("sent isPostData:", isPostData)
 	if (isPostData ~= true) then
 		currentFileName = ""
 		isPostData = false
@@ -136,15 +188,16 @@ function sent(conn)
 end
 
 function receive(conn, payload)
-    tmr.wdclr();
-    local s, e, m, buf, k, v
-    local tbl = {}
-    local i = 1
+	if (currentCPU == "8266") then
+		tmr.wdclr();
+	end
+	local s, e, m, buf, k, v
+	local tbl = {}
+	local i = 1
 	local method
-
 	s, e = string.find(payload, "HTTP", 1, true)
-    if (isPostData and (e == nil)) then
-        retval = writefile(conn, currentFileName, "a+", payload)
+	if (isPostData and (e == nil)) then
+		retval = writefile(conn, currentFileName, "a+", payload)
 		cprint("ispostdata raw data" .. #payload, 4)
 		payload = nil
 		--isPostData = false
@@ -152,31 +205,31 @@ function receive(conn, payload)
 		buf = "HTTP/1.1 100 CONTINUE" .. contentTypeHtml .. getFreeHeapHeader() .. headerBlock
 		conn:send(buf)
 		return
-    else
-        if e ~= nil then
-            buf = string.sub(payload, 1, s - 2)
-            for m in string.gmatch(buf, "/?([%w+%p+][^/+]*)") do
-                tbl[i] = m
+	else
+		if e ~= nil then
+			buf = string.sub(payload, 1, s - 2)
+			for m in string.gmatch(buf, "/?([%w+%p+][^/+]*)") do
+				tbl[i] = m
 				cprint(i .. " " .. m, 5)
-                i = i + 1
-            end
-            m = nil
+				i = i + 1
+			end
+			m = nil
 			method = tbl[1]
 			cprint(#tbl .. " " .. method, 1)
 
-            if tbl[2] == "api" then
-                local cmd = tbl[3]
-                if (tbl[4] ~= nil) and (tbl[4] ~= "/") then
-                    currentFileName = tbl[4]
-                end
+			if tbl[2] == "api" then
+				local cmd = tbl[3]
+				if (tbl[4] ~= nil) and (tbl[4] ~= "/") then
+					currentFileName = tbl[4]
+				end
 				if (tbl[5] ~= nil) then
-                    option = tbl[5]
-                end
+					option = tbl[5]
+				end
 				-- option is always the last parameter, 
 				-- for rename it will be at index 5
 				if (tbl[6] ~= nil) then
-                    option = tbl[6]
-                end
+					option = tbl[6]
+				end
 
 				cprint("cmd " .. cmd, 1)
 				if (cmd == "restart") then
@@ -194,7 +247,7 @@ function receive(conn, payload)
 					retval = dofile(currentFileName)
 				end
 
-                if (cmd == "send") then
+				if (cmd == "send") then
 					if (#currentFileName > 18) then
 						buf = "HTTP/1.1 409 INVALID FILE NAME" .. contentTypeHtml .. getFreeHeapHeader() .. headerBlock
 						conn:send(buf)
@@ -208,10 +261,10 @@ function receive(conn, payload)
 						conn:send(buf)
 						return
 					end
-                end
+				end
 
-                if (cmd == "append") then
-			        s, e = string.find(payload, "\r\n\r\n", 1, true)
+				if (cmd == "append") then
+					s, e = string.find(payload, "\r\n\r\n", 1, true)
 					cprint("payload length " .. #payload, 4)
 					isPostData = true
 					if e ~= nil then
@@ -226,26 +279,26 @@ function receive(conn, payload)
 					--else
 					--	retval = writefile(conn, currentFileName, "a+", payload)
 					end
-                end
+				end
 
-                if (cmd == "persist") then
+				if (cmd == "persist") then
 					if (processOption(currentFileName, option, true)) then
-	                    file.rename("t_" .. currentFileName, currentFileName)
+						file.rename("t_" .. currentFileName, currentFileName)
 						retval = success.. getfilesize(currentFileName).. "}"
 					end
-                end
+				end
 				if (cmd == "rename") then
 					if (processOption(tbl[5], option, true)) then
-	                    file.rename(currentFileName, tbl[5])
+						file.rename(currentFileName, tbl[5])
 					end
-                end
+				end
 
 				if (cmd == "delete") then
-                    file.remove(currentFileName)
-                end
+					file.remove(currentFileName)
+				end
 
 				if (cmd == "list") then
-                    -- get list of files and send to client
+					-- get list of files and send to client
 					local listBuf = "[{\"name\":\".\",\"size\": 0}"
 					l = file.list();
 					for k,v in pairs(l) do
@@ -260,42 +313,49 @@ function receive(conn, payload)
 					l = nil
 					listBuf = nil
 					return
-                end
+				end
 
 				if (cmd == "version") then
 					local f = getFileObject(conn, currentFileName, "r")
-	                f:seek("set", 2)
+					f:seek("set", 2)
 					buf = "HTTP/1.1 200 OK" .. contentTypeHtml .. getFreeHeapHeader() .. headerBlock .. f:readline()
-					closeFileObject(conn, currentFileName)
+					closeFileObject(conn, currentFileName, nil, nil)
 					f = nil
 					conn:send(buf)
 					payload = nil
 					tbl = nil
 					return
-                end
+				end
 
-                buf = ""
-                if retval == nil then
-                    retval = "[nil]"
-                end
-            else
+				buf = ""
+				if retval == nil then
+					retval = "[nil]"
+				end
+			else
 				-- if no command was present the client wants to download an existing file.  
 				-- default document name is hard-coded in the line below
-                local filename = "index.html"
-                if tbl[2] ~= nil and tbl[2] ~= "/" then
-                    filename = tbl[2]
-                end
-				closeFileObject(conn, filename)
-				cprint("calling upload " .. filename, 1)
-                require("fileupload")(conn, filename)
-				buf = nil
-				payload = nil
-				tbl = nil
-				return
-            end
-        end
-    end
-    buf = "HTTP/1.1 200 OK" .. contentTypeHtml.. getFreeHeapHeader() .. headerBlock .. retval
+				local filename = "index.html"
+				if tbl[2] ~= nil and tbl[2] ~= "/" then
+					filename = tbl[2]
+				end
+				-- closeFileObject(conn, filename)
+
+				if (isFileOpen(conn, filename, nil, nil)) then
+					buf = "HTTP/1.1 503 SERVER BUSY" .. getFreeHeapHeader() .. headerBlock	
+					conn:send(buf)
+					return
+				else
+					cprint("calling upload " .. filename, 1)
+					require("fileupload")(conn, filename)
+					buf = nil
+					payload = nil
+					tbl = nil
+					return
+				end
+			end
+		end
+	end
+	buf = "HTTP/1.1 200 OK" .. contentTypeHtml.. getFreeHeapHeader() .. headerBlock .. retval
 	payload = nil
 	tbl = nil
 	if isResetting == false then

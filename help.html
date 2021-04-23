@@ -16,7 +16,7 @@
     <h2>ESP File Manager for NodeMCU</h2>
     <p>(Developed using NodeMCU 3.0-master, complete build details below)</p>
     <p>
-        This app allows files of any size or type to be uploaded to and downloaded from an ESP-8266,
+        This app allows files of any size or type to be uploaded to and downloaded from an ESP8266 or ESP32,
         using any browser [within reason.].
     </p>
 
@@ -48,9 +48,8 @@
 
     <p><b>Limitations:</b></p>
     <ul>
-        <li>Multiple silmultaneous downloads using the same file name, from the same IP address, are not supported. (i.e., the remote host IP + filename must be unique.)</li>
         <li>Multiple silmultaneous uploads to the same file name from any hosts, is unsupported.</li>
-        <li>File corruption will be the consequence if either of the two conditions above occur.</li>
+        <li>File corruption will be the consequence if the condition above occurs.</li>
         <li>Error checking capabilities are extremely limited.</li>
         <li>The upload user interface is the standard input type=file element, however, the upload protocol is not standard, the script code in files.js must be used.</li>
     </ul>
@@ -126,7 +125,7 @@
                         <li>
                             Re-execute the same console commands, look for a new address in the output, use that address to browse to it.  e.g.,
                             if the new address in the list is 192.168.0.6, browse to http://192.168.0.6/files.html or
-                            http://192.168.0.6/ (the default file is index.html, which contains a client-side 
+                            http://192.168.0.6/ (the default file is index.html, which contains a client-side
                             redirect to files.html)
                         </li>
                     </ul>
@@ -134,6 +133,11 @@
             </ul>
         </li>
         <li>In AP mode the IP of the ESP is set in the configuration file cfg.lua, default is 192.168.4.1
+        <li>
+            Note that because it uses STATIONAP mode, it effectively works as both when in station mode, but the
+            AP has the default configuration, to customize the confifuration it must use AP mode.
+        </li>
+
     </ul>
 
     <p>
@@ -168,7 +172,7 @@
             </ul>
         </li>
     </ul>
-   
+
     <p>API Documentation</p>
     <ul>
         <li>[file name] - name of file, URL encoded if necessary</li>
@@ -191,7 +195,7 @@
         <li>/api/version/[file name]</li>
     </ul>
 
-    <p><b>Build details:</b></p>
+    <p><b>Build details:</b>  <a href="https://nodemcu-build.com/index.php">Get NodeMCU</a></p>
     <pre>
 NodeMCU 3.0.0.0 built on nodemcu-build.com provided by frightanic.com
 	branch: master
@@ -203,6 +207,16 @@ NodeMCU 3.0.0.0 built on nodemcu-build.com provided by frightanic.com
 	LFS: 0x0
 	modules: file,gpio,net,node,tmr,uart,wifi
 build 2019-12-04 04:30 powered by Lua 5.1.4 on SDK 3.0.1-dev(fce080e)
+
+
+NodeMCU ESP32 built on nodemcu-build.com provided by frightanic.com
+	branch: dev-esp32
+	commit: 3acb6b7c79271b0e44481684205938f0f4a9f079
+	SSL: true
+	modules: adc,file,gpio,i2c,ledc,net,node,otaupgrade,sjson,struct,time,tmr,uart,wifi
+ build 2021-04-08-11-33-01 powered by Lua 5.1.4 on ESP-IDF v3.3-beta1-1738-gb64b37523 on SDK IDF
     </pre>
+
+
 </body>
 </html>

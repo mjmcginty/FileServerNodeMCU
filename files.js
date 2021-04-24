@@ -148,6 +148,39 @@ function getCfg() {
 }
 
 
+function executeSelectedFile() {
+    var fileName = page.fileDropdownElement.value;
+    doFile(fileName);
+}
+
+function editSelectedFile() {
+    page.configDiv.style.display = "block";
+    var fileName = page.fileDropdownElement.value;
+    page.editedFileName.innerText = fileName;
+    var xhrCfg = new XMLHttpRequest();
+    urlPrefix = location.protocol + "//" + page.serverElement.value;
+    xhrCfg.onreadystatechange = null;
+    xhrCfg.open("GET", urlPrefix + "/" + fileName, false);
+    xhrCfg.send();
+    page.configElement.value = xhrCfg.responseText;
+}
+
+function saveEditedFile() {
+    var xhrCfg = new XMLHttpRequest();
+    var cfgBuf = page.configElement.value;
+    var fileName = page.fileDropdownElement.value;
+    urlPrefix = location.protocol + "//" + page.serverElement.value;
+    xhrCfg.onreadystatechange = null;
+    xhrCfg.open("GET", urlPrefix + "/api/send/" + fileName + "/Overwrite", false);
+    xhrCfg.send();
+    xhrCfg.open("POST", urlPrefix + "/api/append/" + fileName + "/Overwrite", false);
+    xhrCfg.send(cfgBuf);
+    xhrCfg.open("GET", urlPrefix + "/api/persist/" + fileName + "/Overwrite", false);
+    xhrCfg.send();
+    page.configDiv.style.display = "none";
+}
+
+
 function getFileList() {
     urlPrefix = location.protocol + "//" + page.serverElement.value;
     xhr2 = new XMLHttpRequest();
@@ -162,6 +195,15 @@ function restartESP() {
     xhr2.open("GET", urlPrefix + "/api/restart", false);
     xhr2.send();
 }
+
+function doFile(fileName) {
+    urlPrefix = location.protocol + "//" + page.serverElement.value;
+    xhr2 = new XMLHttpRequest();
+    xhr2.open("GET", urlPrefix + "/api/dofile/" + fileName, false);
+    xhr2.send();
+}
+
+
 
 function getheap() {
     if (page) {

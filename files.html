@@ -64,10 +64,11 @@
 
 
     <button onclick="getFileList()">Refresh File List</button>&nbsp;&nbsp;&nbsp;
-    <button onclick="getCfg()">Edit Config</button>
+    <!--button onclick="getCfg()">Edit Config</button -->
     <br /><br />
     <div id="configDiv" style="display:none; border: solid gray 1px; width: 360px; padding: 5px;">
-        <button onclick="sendCfg()">Save Config</button> <button onclick="this.parentElement.style.display = 'none'">Cancel</button><br /><br />
+        <span id="editedFileName"></span><br><br>
+        <button onclick="saveEditedFile()">Save Changes</button> <button onclick="this.parentElement.style.display = 'none'">Cancel</button><br /><br />
         <textarea id="configElement" style="width: 350px; height: 220px;"></textarea>
     </div>
     <table>
@@ -80,20 +81,24 @@
             <td valign="top">
                 <div style="border: solid gray 1px; padding: 5px; margin-left:25px;">
                     <select id="fileDropdown"></select><br /><br />
-                    <button id="deleteFileBtn" onclick="deleteSelectedFile(this)">Delete Selected File</button><br />
-                    <div id="deleteConfirmDiv" style="display:none;">
+                    <button id="editFileBtn" onclick="editSelectedFile(this)">Edit Selected File</button><br /><br>
+                    <button id="executeFileBtn" onclick="executeSelectedFile(this)">Execute Selected LUA File</button><br /><br>
+                    <div style="border: solid gray 1px; padding: 5px;">
+                        <button id="deleteFileBtn" onclick="deleteSelectedFile(this)">Delete Selected File</button><br />
+                        <div id="deleteConfirmDiv" style="display:none;">
+                            <br />
+                            Delete the selected file?<br />
+                            Click the Delete button again to confirm
+                        </div>
                         <br />
-                        Delete the selected file?<br />
-                        Click the Delete button again to confirm
+                        <button id="renameFileBtn" onclick="renameSelectedFile(this)">Rename Selected File</button><br />
+                        <div id="newNameDiv" style="display:none;">
+                            <br />
+                            New file name <input type="text" id="newFileNameInput" /><br /><br />
+                            (Enter new name and click the Rename button again.)
+                        </div>
+                        <button id="cancelFileOpBtn" style="display:none;" onclick="cancelDeleteRename(this)">Cancel</button>
                     </div>
-                    <br />
-                    <button id="renameFileBtn" onclick="renameSelectedFile(this)">Rename Selected File</button><br />
-                    <div id="newNameDiv" style="display:none;">
-                        <br />
-                        New file name <input type="text" id="newFileNameInput" /><br /><br />
-                        (Enter new name and click the Rename button again.)
-                    </div>
-                    <button id="cancelFileOpBtn" style="display:none;" onclick="cancelDeleteRename(this)">Cancel</button>
                 </div>
             </td>
         </tr>
@@ -131,7 +136,8 @@
             "renameFileBtnElement": document.getElementById("renameFileBtn"),
             "configElement": document.getElementById("configElement"),
             "configDiv": document.getElementById("configDiv"),
-            "heapElement": document.getElementById("heapElement")
+            "heapElement": document.getElementById("heapElement"),
+            "editedFileName": document.getElementById("editedFileName")
         }
 
         fileJsInit(initObj);
